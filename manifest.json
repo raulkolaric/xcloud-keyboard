@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Xbox Cloud KBM Prototype",
   "version": "0.1.0",
-  "description": "Proof of concept: expose a neutral virtual controller to Xbox Cloud Gaming.",
+  "description": "Map keyboard and mouse input to a virtual Xbox Cloud Gaming controller.",
   "content_scripts": [
     {
       "matches": ["https://www.xbox.com/*play*", "https://play.xbox.com/*"],
