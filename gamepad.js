@@ -97,7 +97,7 @@
         event.preventDefault();
         return;
       }
-      if (!enabled || !document.hasFocus() ||
+      if (!enabled ||
           event.target instanceof HTMLElement &&
           (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName))) return;
       if (event.code.startsWith("Arrow") || event.code in buttonKeys ||
