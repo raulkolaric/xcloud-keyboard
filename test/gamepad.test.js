@@ -56,14 +56,15 @@ test("uses an empty native slot before adding a fifth controller", () => {
 
 test("F8 gates keyboard input and normalizes diagonal movement", () => {
   const listeners = {};
+  const dispatched = [];
   const navigator = { getGamepads: () => [] };
   const document = { readyState: "loading", hasFocus: () => true, addEventListener() {},
     body: { requestPointerLock: () => Promise.resolve() }, exitPointerLock() {} };
   const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
   vm.runInNewContext(source, {
     navigator,
-    window: { addEventListener: (type, fn) => { listeners[type] = fn; }, dispatchEvent() {} },
-    Event: class {}, HTMLElement: class {},
+    window: { addEventListener: (type, fn) => { listeners[type] = fn; }, dispatchEvent: event => dispatched.push(event) },
+    Event: class { constructor(type) { this.type = type; } }, HTMLElement: class {},
     document,
     requestAnimationFrame() {},
     performance: { now: () => 0 },
@@ -75,6 +76,7 @@ test("F8 gates keyboard input and normalizes diagonal movement", () => {
   key("keydown", "KeyW");
   assert.equal(pad.axes[1], 0);
   key("keydown", "F8");
+  assert.ok(dispatched.some(event => event.type === "gamepadconnected" && event.gamepad === pad));
   key("keydown", "KeyW");
   key("keydown", "KeyD");
   assert.ok(Math.abs(pad.axes[0] - Math.SQRT1_2) < 0.001);

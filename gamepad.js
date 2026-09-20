@@ -25,6 +25,7 @@
     enabled = value;
     clearKeyboard();
     clearMouse();
+    if (enabled) announce();
     if (enabled && lock) document.body?.requestPointerLock().catch(error => console.warn("[Xbox Cloud KBM] Pointer lock failed", error));
     if (!enabled && document.pointerLockElement) document.exitPointerLock();
     console.info("[Xbox Cloud KBM] Keyboard and mouse", enabled ? "enabled" : "disabled");
