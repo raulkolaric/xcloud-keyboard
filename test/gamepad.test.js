@@ -35,3 +35,19 @@ test("exposes one neutral standard pad and preserves physical pads", () => {
   assert.equal(events.dispatched.type, "gamepadconnected");
   assert.equal(events.dispatched.gamepad, pads[1]);
 });
+
+test("uses an empty native slot before adding a fifth controller", () => {
+  const navigator = { getGamepads: () => [null, null, null, null] };
+  const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
+  vm.runInNewContext(source, {
+    navigator,
+    window: { addEventListener() {} },
+    Event: class {},
+    document: { readyState: "loading" },
+    performance: { now: () => 0 },
+    console: { info() {} }
+  });
+  const pads = navigator.getGamepads();
+  assert.equal(pads.length, 4);
+  assert.equal(pads[0].index, 0);
+});

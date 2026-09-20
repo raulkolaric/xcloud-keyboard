@@ -14,8 +14,9 @@
 
   navigator.getGamepads = () => {
     const pads = Array.from(nativeGetGamepads());
-    gamepad.index = pads.length;
-    pads.push(gamepad);
+    gamepad.index = pads.findIndex(pad => pad == null);
+    if (gamepad.index < 0) gamepad.index = pads.length;
+    pads[gamepad.index] = gamepad;
     return pads;
   };
 
