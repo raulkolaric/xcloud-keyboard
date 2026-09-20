@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Xbox Cloud KBM Prototype",
+  "version": "0.1.0",
+  "description": "Proof of concept: expose a neutral virtual controller to Xbox Cloud Gaming.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.xbox.com/*play*", "https://play.xbox.com/*"],
+      "js": ["gamepad.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}
