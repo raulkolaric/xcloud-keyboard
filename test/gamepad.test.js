@@ -18,7 +18,8 @@ test("exposes one neutral standard pad and preserves physical pads", () => {
   const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
   vm.runInNewContext(source, {
     navigator, window, Event,
-    document: { readyState: "loading" },
+    document: { readyState: "loading", addEventListener() {} },
+    requestAnimationFrame() {},
     performance: { now: () => 42 },
     console: { info() {} }
   });
@@ -43,7 +44,8 @@ test("uses an empty native slot before adding a fifth controller", () => {
     navigator,
     window: { addEventListener() {} },
     Event: class {},
-    document: { readyState: "loading" },
+    document: { readyState: "loading", addEventListener() {} },
+    requestAnimationFrame() {},
     performance: { now: () => 0 },
     console: { info() {} }
   });
@@ -55,12 +57,15 @@ test("uses an empty native slot before adding a fifth controller", () => {
 test("F8 gates keyboard input and normalizes diagonal movement", () => {
   const listeners = {};
   const navigator = { getGamepads: () => [] };
+  const document = { readyState: "loading", hasFocus: () => true, addEventListener() {},
+    body: { requestPointerLock: () => Promise.resolve() }, exitPointerLock() {} };
   const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
   vm.runInNewContext(source, {
     navigator,
     window: { addEventListener: (type, fn) => { listeners[type] = fn; } },
     Event: class {}, HTMLElement: class {},
-    document: { readyState: "loading", hasFocus: () => true },
+    document,
+    requestAnimationFrame() {},
     performance: { now: () => 0 },
     console: { info() {} }
   });
@@ -78,8 +83,17 @@ test("F8 gates keyboard input and normalizes diagonal movement", () => {
   assert.equal(pad.buttons[0].value, 1);
   key("keyup", "Space");
   assert.equal(pad.buttons[0].value, 0);
+  document.pointerLockElement = document.body;
+  listeners.mousemove({ movementX: 100, movementY: -10 });
+  assert.equal(pad.axes[2], 1);
+  assert.equal(pad.axes[3], -0.25);
+  listeners.mousedown({ button: 0, preventDefault() {}, stopImmediatePropagation() {} });
+  assert.equal(pad.buttons[7].value, 1);
+  listeners.mouseup({ button: 0, preventDefault() {}, stopImmediatePropagation() {} });
+  assert.equal(pad.buttons[7].value, 0);
   listeners.blur();
   assert.equal(pad.axes[0], 0);
+  assert.equal(pad.axes[2], 0);
   key("keydown", "F8");
   key("keydown", "Space");
   assert.equal(pad.buttons[0].value, 0);

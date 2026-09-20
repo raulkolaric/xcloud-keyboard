@@ -36,12 +36,49 @@
     keys.clear();
     updateKeyboard();
   };
+  const clearMouse = () => {
+    gamepad.axes[2] = gamepad.axes[3] = 0;
+    for (const index of [6, 7, 11]) Object.assign(gamepad.buttons[index], { pressed: false, touched: false, value: 0 });
+  };
+
+  window.addEventListener("mousemove", event => {
+    if (!enabled || !document.pointerLockElement) return;
+    gamepad.axes[2] = Math.max(-1, Math.min(1, gamepad.axes[2] + event.movementX * 0.025));
+    gamepad.axes[3] = Math.max(-1, Math.min(1, gamepad.axes[3] + event.movementY * 0.025));
+  }, true);
+  for (const type of ["mousedown", "mouseup"]) {
+    window.addEventListener(type, event => {
+      if (!enabled || !document.pointerLockElement || ![0, 1, 2].includes(event.button)) return;
+      const index = [7, 11, 6][event.button];
+      const pressed = type === "mousedown";
+      Object.assign(gamepad.buttons[index], { pressed, touched: pressed, value: Number(pressed) });
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+  window.addEventListener("contextmenu", event => {
+    if (enabled && document.pointerLockElement) event.preventDefault();
+  }, true);
+  document.addEventListener("pointerlockchange", () => {
+    if (!document.pointerLockElement) clearMouse();
+  });
+  const decayMouse = () => {
+    gamepad.axes[2] *= 0.65;
+    gamepad.axes[3] *= 0.65;
+    if (Math.abs(gamepad.axes[2]) < 0.001) gamepad.axes[2] = 0;
+    if (Math.abs(gamepad.axes[3]) < 0.001) gamepad.axes[3] = 0;
+    requestAnimationFrame(decayMouse);
+  };
+  requestAnimationFrame(decayMouse);
 
   for (const type of ["keydown", "keyup"]) {
     window.addEventListener(type, event => {
       if (event.code === "F8" && type === "keydown" && !event.repeat) {
         enabled = !enabled;
         clearKeyboard();
+        clearMouse();
+        if (enabled) document.body?.requestPointerLock().catch(error => console.warn("[Xbox Cloud KBM] Pointer lock failed", error));
+        else if (document.pointerLockElement) document.exitPointerLock();
         console.info("[Xbox Cloud KBM] Keyboard", enabled ? "enabled" : "disabled");
         event.preventDefault();
         return;
@@ -59,7 +96,7 @@
       }
     }, true);
   }
-  window.addEventListener("blur", clearKeyboard);
+  window.addEventListener("blur", () => { clearKeyboard(); clearMouse(); });
 
   navigator.getGamepads = () => {
     const pads = Array.from(nativeGetGamepads());
