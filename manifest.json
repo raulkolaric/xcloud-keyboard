@@ -9,6 +9,13 @@
       "js": ["gamepad.js"],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.xbox.com/*play*", "https://play.xbox.com/*"],
+      "js": ["settings.js"],
+      "run_at": "document_start"
     }
-  ]
+  ],
+  "permissions": ["storage"],
+  "action": { "default_popup": "popup.html" }
 }

@@ -19,6 +19,24 @@
     ArrowUp: 12, ArrowDown: 13, ArrowLeft: 14, ArrowRight: 15
   };
   let enabled = false;
+  let sensitivity = 0.025;
+
+  const setEnabled = (value, lock = false) => {
+    enabled = value;
+    clearKeyboard();
+    clearMouse();
+    if (enabled && lock) document.body?.requestPointerLock().catch(error => console.warn("[Xbox Cloud KBM] Pointer lock failed", error));
+    if (!enabled && document.pointerLockElement) document.exitPointerLock();
+    console.info("[Xbox Cloud KBM] Keyboard and mouse", enabled ? "enabled" : "disabled");
+  };
+
+  window.addEventListener("XCLOUD_KBM_SETTINGS", event => {
+    const settings = JSON.parse(event.detail);
+    if (typeof settings.sensitivity === "number" && Number.isFinite(settings.sensitivity))
+      sensitivity = Math.max(0.005, Math.min(0.1, settings.sensitivity));
+    if (typeof settings.enabled === "boolean" && settings.enabled !== enabled)
+      setEnabled(settings.enabled);
+  });
 
   const updateKeyboard = () => {
     let x = Number(keys.has("KeyD")) - Number(keys.has("KeyA"));
@@ -43,8 +61,8 @@
 
   window.addEventListener("mousemove", event => {
     if (!enabled || !document.pointerLockElement) return;
-    gamepad.axes[2] = Math.max(-1, Math.min(1, gamepad.axes[2] + event.movementX * 0.025));
-    gamepad.axes[3] = Math.max(-1, Math.min(1, gamepad.axes[3] + event.movementY * 0.025));
+    gamepad.axes[2] = Math.max(-1, Math.min(1, gamepad.axes[2] + event.movementX * sensitivity));
+    gamepad.axes[3] = Math.max(-1, Math.min(1, gamepad.axes[3] + event.movementY * sensitivity));
   }, true);
   for (const type of ["mousedown", "mouseup"]) {
     window.addEventListener(type, event => {
@@ -74,12 +92,8 @@
   for (const type of ["keydown", "keyup"]) {
     window.addEventListener(type, event => {
       if (event.code === "F8" && type === "keydown" && !event.repeat) {
-        enabled = !enabled;
-        clearKeyboard();
-        clearMouse();
-        if (enabled) document.body?.requestPointerLock().catch(error => console.warn("[Xbox Cloud KBM] Pointer lock failed", error));
-        else if (document.pointerLockElement) document.exitPointerLock();
-        console.info("[Xbox Cloud KBM] Keyboard", enabled ? "enabled" : "disabled");
+        setEnabled(!enabled, true);
+        window.dispatchEvent(new Event("XCLOUD_KBM_TOGGLE"));
         event.preventDefault();
         return;
       }
@@ -96,6 +110,9 @@
       }
     }, true);
   }
+  window.addEventListener("pointerdown", () => {
+    if (enabled && !document.pointerLockElement) document.body?.requestPointerLock().catch(() => {});
+  }, true);
   window.addEventListener("blur", () => { clearKeyboard(); clearMouse(); });
 
   navigator.getGamepads = () => {

@@ -62,7 +62,7 @@ test("F8 gates keyboard input and normalizes diagonal movement", () => {
   const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
   vm.runInNewContext(source, {
     navigator,
-    window: { addEventListener: (type, fn) => { listeners[type] = fn; } },
+    window: { addEventListener: (type, fn) => { listeners[type] = fn; }, dispatchEvent() {} },
     Event: class {}, HTMLElement: class {},
     document,
     requestAnimationFrame() {},
@@ -87,6 +87,9 @@ test("F8 gates keyboard input and normalizes diagonal movement", () => {
   listeners.mousemove({ movementX: 100, movementY: -10 });
   assert.equal(pad.axes[2], 1);
   assert.equal(pad.axes[3], -0.25);
+  listeners.XCLOUD_KBM_SETTINGS({ detail: JSON.stringify({ sensitivity: 0.05 }) });
+  listeners.mousemove({ movementX: 0, movementY: -10 });
+  assert.equal(pad.axes[3], -0.75);
   listeners.mousedown({ button: 0, preventDefault() {}, stopImmediatePropagation() {} });
   assert.equal(pad.buttons[7].value, 1);
   listeners.mouseup({ button: 0, preventDefault() {}, stopImmediatePropagation() {} });
@@ -97,4 +100,29 @@ test("F8 gates keyboard input and normalizes diagonal movement", () => {
   key("keydown", "F8");
   key("keydown", "Space");
   assert.equal(pad.buttons[0].value, 0);
+});
+
+test("settings bridge publishes local values and stores F8 toggles", () => {
+  const listeners = {};
+  const published = [];
+  const saved = [];
+  const chrome = { storage: {
+    local: {
+      get: (_defaults, callback) => callback({ enabled: false, sensitivity: 0.025 }),
+      set: value => saved.push(value)
+    },
+    onChanged: { addListener: callback => { listeners.storage = callback; } }
+  } };
+  const source = fs.readFileSync(path.join(__dirname, "../settings.js"), "utf8");
+  vm.runInNewContext(source, {
+    chrome,
+    CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
+    window: { addEventListener: (type, callback) => { listeners[type] = callback; },
+      dispatchEvent: event => published.push(JSON.parse(event.detail)) }
+  });
+  assert.equal(published[0].sensitivity, 0.025);
+  listeners.XCLOUD_KBM_TOGGLE();
+  assert.equal(saved[0].enabled, true);
+  listeners.storage({ sensitivity: { newValue: 0.05 } }, "local");
+  assert.equal(published[1].sensitivity, 0.05);
 });
