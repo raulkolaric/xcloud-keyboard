@@ -1,5 +1,7 @@
 # Project context
 
+The original project brief is preserved in [brief.md](brief.md).
+
 ## Goal
 
 Independently build a small, browser-only Chromium extension that lets keyboard and mouse control Xbox Cloud Gaming through a virtual standard gamepad. No telemetry, backend, native driver, or borrowed proprietary code.
