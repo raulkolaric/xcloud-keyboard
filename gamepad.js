@@ -21,7 +21,9 @@
 
   const announce = () => {
     navigator.getGamepads();
-    window.dispatchEvent(new GamepadEvent("gamepadconnected", { gamepad }));
+    const event = new Event("gamepadconnected");
+    Object.defineProperty(event, "gamepad", { value: gamepad });
+    window.dispatchEvent(event);
     console.info("[Xbox Cloud KBM] Virtual controller exposed at index", gamepad.index);
   };
   if (document.readyState === "complete") announce();

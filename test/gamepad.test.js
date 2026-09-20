@@ -12,12 +12,12 @@ test("exposes one neutral standard pad and preserves physical pads", () => {
     addEventListener: (name, fn) => { events[name] = fn; },
     dispatchEvent: event => { events.dispatched = event; }
   };
-  class GamepadEvent {
-    constructor(type, options) { this.type = type; this.gamepad = options.gamepad; }
+  class Event {
+    constructor(type) { this.type = type; }
   }
   const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
   vm.runInNewContext(source, {
-    navigator, window, GamepadEvent,
+    navigator, window, Event,
     document: { readyState: "loading" },
     performance: { now: () => 42 },
     console: { info() {} }
