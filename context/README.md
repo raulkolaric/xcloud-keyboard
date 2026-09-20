@@ -15,6 +15,7 @@ This is a small Manifest V3 extension with no build step or dependencies. `gamep
 - Forza displayed a controller-disconnected screen after reloading the stream. A fresh synthetic connection event plus a held A button cleared that screen. A synthetic held Space keydown routed through the extension also cleared it and advanced the game's assists menu to its confirmation prompt. This proves the live game accepted the mapped A input. The connection announcement was added to the F8 enable transition for recovery; the game can still show the disconnect screen after a page reload.
 - Automated single-key taps through Brave control did not advance the menu, while a sustained keydown did. DevTools and browser automation also paused the stream intermittently, so those taps do not establish a normal-user input failure. The trial 80 ms release delay was removed because it did not improve that test and would add input lag.
 - DevTools occasionally showed unrelated fetch/media errors while the stream was paused. No account or multiplayer actions were performed.
+- After the final extension reload, the user tested physical input in Brave and reported, “it works.” The specific controls used in that check were not yet reported, so the detailed acceptance checks below remain open.
 
 ## Remaining acceptance checks
 
