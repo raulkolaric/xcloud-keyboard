@@ -51,3 +51,36 @@ test("uses an empty native slot before adding a fifth controller", () => {
   assert.equal(pads.length, 4);
   assert.equal(pads[0].index, 0);
 });
+
+test("F8 gates keyboard input and normalizes diagonal movement", () => {
+  const listeners = {};
+  const navigator = { getGamepads: () => [] };
+  const source = fs.readFileSync(path.join(__dirname, "../gamepad.js"), "utf8");
+  vm.runInNewContext(source, {
+    navigator,
+    window: { addEventListener: (type, fn) => { listeners[type] = fn; } },
+    Event: class {}, HTMLElement: class {},
+    document: { readyState: "loading", hasFocus: () => true },
+    performance: { now: () => 0 },
+    console: { info() {} }
+  });
+  const pad = navigator.getGamepads()[0];
+  const key = (type, code) => listeners[type]({ code, repeat: false, target: null,
+    preventDefault() {}, stopImmediatePropagation() {} });
+  key("keydown", "KeyW");
+  assert.equal(pad.axes[1], 0);
+  key("keydown", "F8");
+  key("keydown", "KeyW");
+  key("keydown", "KeyD");
+  assert.ok(Math.abs(pad.axes[0] - Math.SQRT1_2) < 0.001);
+  assert.ok(Math.abs(pad.axes[1] + Math.SQRT1_2) < 0.001);
+  key("keydown", "Space");
+  assert.equal(pad.buttons[0].value, 1);
+  key("keyup", "Space");
+  assert.equal(pad.buttons[0].value, 0);
+  listeners.blur();
+  assert.equal(pad.axes[0], 0);
+  key("keydown", "F8");
+  key("keydown", "Space");
+  assert.equal(pad.buttons[0].value, 0);
+});
